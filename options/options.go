@@ -16,7 +16,7 @@ type Options struct {
 
 func Default() Options {
 	return Options{
-		Logger: log.Instance(),
+		Logger: log.InstanceLogger(),
 		Local:  true,
 		Single: true,
 		Ip:     LocalIp,

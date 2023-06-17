@@ -1,14 +1,9 @@
 package ssh
 
 import (
-	"errors"
 	"github.com/candbright/go-ssh/options"
 	"os"
 	"sync"
-)
-
-var (
-	ErrNilSshClient = errors.New("ssh client is nil")
 )
 
 func AddLocalIp(ips ...string) {

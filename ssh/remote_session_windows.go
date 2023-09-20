@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/candbright/go-log/log"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"io"
 	"os"
 	"time"
 )
 
 type RemoteSession struct {
 	client   *ssh.Client
-	logger   *log.Logger
+	writer   io.Writer
 	ip       string
 	port     uint16
 	user     string
@@ -101,11 +102,12 @@ func (s *RemoteSession) Output(name string, arg ...string) ([]byte, error) {
 	var errBuffer bytes.Buffer
 	sess.Stderr = &errBuffer
 	output, err := sess.Output(Command(name, arg...))
+	errStr, _ := simplifiedchinese.GBK.NewDecoder().String(errBuffer.String())
 	if err != nil {
-		Fail(s.logger, name, arg, errBuffer.String(), err)
+		Fail(s.writer, name, arg, errStr, err)
 		return nil, err
 	} else {
-		Success(s.logger, name, arg, string(output))
+		Success(s.writer, name, arg, string(output))
 		return output, nil
 	}
 }
@@ -122,10 +124,10 @@ func (s *RemoteSession) CombinedOutput(name string, arg ...string) ([]byte, erro
 	defer sess.Close()
 	output, err := sess.CombinedOutput(Command(name, arg...))
 	if err != nil {
-		Fail(s.logger, name, arg, string(output), err)
+		Fail(s.writer, name, arg, string(output), err)
 		return nil, err
 	} else {
-		Success(s.logger, name, arg, string(output))
+		Success(s.writer, name, arg, string(output))
 		return output, nil
 	}
 }

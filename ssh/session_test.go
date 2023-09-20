@@ -1,7 +1,7 @@
 package ssh
 
 import (
-	"github.com/candbright/go-ssh/options"
+	"github.com/candbright/go-ssh/ssh/options"
 	"testing"
 )
 

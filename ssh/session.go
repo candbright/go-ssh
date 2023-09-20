@@ -1,7 +1,7 @@
 package ssh
 
 import (
-	"github.com/candbright/go-ssh/options"
+	"github.com/candbright/go-ssh/ssh/options"
 	"os"
 	"sync"
 )
@@ -45,10 +45,10 @@ func NewSession(opt ...options.Option) (*Session, error) {
 	}
 	var s session
 	if o.Local {
-		s = &LocalSession{logger: o.Logger}
+		s = &LocalSession{writer: o.Writer}
 	} else {
 		s = &RemoteSession{
-			logger:   o.Logger,
+			writer:   o.Writer,
 			ip:       o.Ip,
 			port:     o.Port,
 			user:     o.User,

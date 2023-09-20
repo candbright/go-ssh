@@ -1,11 +1,12 @@
 package options
 
 import (
-	"github.com/candbright/go-log/log"
+	"io"
+	"os"
 )
 
 type Options struct {
-	Logger   *log.Logger
+	Writer   io.Writer
 	Local    bool
 	Single   bool
 	Ip       string
@@ -16,7 +17,7 @@ type Options struct {
 
 func Default() Options {
 	return Options{
-		Logger: log.InstanceLogger(),
+		Writer: os.Stdout,
 		Local:  true,
 		Single: true,
 		Ip:     LocalIp,

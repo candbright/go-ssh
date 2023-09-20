@@ -3,14 +3,15 @@ package ssh
 import (
 	"bytes"
 	"errors"
-	"github.com/candbright/go-log/log"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
 
 type LocalSession struct {
-	logger *log.Logger
+	writer io.Writer
 }
 
 func (s *LocalSession) Run(name string, arg ...string) error {
@@ -27,11 +28,12 @@ func (s *LocalSession) Output(name string, arg ...string) ([]byte, error) {
 	var errBuffer bytes.Buffer
 	c.Stderr = &errBuffer
 	output, err := c.Output()
+	errStr, _ := simplifiedchinese.GBK.NewDecoder().String(errBuffer.String())
 	if err != nil {
-		Fail(s.logger, name, arg, errBuffer.String(), err)
+		Fail(s.writer, name, arg, errStr, err)
 		return nil, err
 	} else {
-		Success(s.logger, name, arg, string(output))
+		Success(s.writer, name, arg, string(output))
 		return output, nil
 	}
 }
@@ -43,10 +45,10 @@ func (s *LocalSession) CombinedOutput(name string, arg ...string) ([]byte, error
 	copy(args[2:], arg)
 	output, err := exec.Command("cmd", args...).CombinedOutput()
 	if err != nil {
-		Fail(s.logger, name, arg, string(output), err)
+		Fail(s.writer, name, arg, string(output), err)
 		return nil, err
 	} else {
-		Success(s.logger, name, arg, string(output))
+		Success(s.writer, name, arg, string(output))
 		return output, nil
 	}
 }
@@ -68,11 +70,12 @@ func (s *LocalSession) OutputGrep(cmdList []Cmd) ([]byte, error) {
 	var errBuffer bytes.Buffer
 	c.Stderr = &errBuffer
 	output, err := c.Output()
+	errStr, _ := simplifiedchinese.GBK.NewDecoder().String(errBuffer.String())
 	if err != nil {
-		Fail(s.logger, name, arg, errBuffer.String(), err)
+		Fail(s.writer, name, arg, errStr, err)
 		return nil, err
 	} else {
-		Success(s.logger, name, arg, string(output))
+		Success(s.writer, name, arg, string(output))
 		return output, nil
 	}
 }

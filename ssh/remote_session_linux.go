@@ -8,7 +8,6 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -186,6 +185,9 @@ func (s *RemoteSession) ReadDir(dir string) ([]FileInfo, error) {
 	}
 	files := make([]FileInfo, 0)
 	for _, file := range strings.Split(string(output), "\n") {
+		if file == "" {
+			continue
+		}
 		if strings.HasSuffix(file, "/") {
 			files = append(files, FileInfo{Name: file, Path: dir + file})
 		} else {
@@ -196,7 +198,7 @@ func (s *RemoteSession) ReadDir(dir string) ([]FileInfo, error) {
 }
 
 func (s *RemoteSession) MakeDirAll(path string, perm os.FileMode) error {
-	return s.Run("mkdir", "-p", path, "-m", strconv.FormatUint(uint64(perm), 10))
+	return s.Run("mkdir", "-p", path, "-m", perm.String())
 }
 
 func (s *RemoteSession) Remove(name string) error {
@@ -226,5 +228,5 @@ func (s *RemoteSession) WriteString(name string, data string, mode ...string) er
 	if len(mode) == 1 && mode[0] == ">>" {
 		flag = ">>"
 	}
-	return s.Run("echo", fmt.Sprintf(`"%s"`, data), flag, name)
+	return s.Run("echo", fmt.Sprintf(`'%s'`, data), flag, name)
 }

@@ -15,7 +15,7 @@ type Cmd struct {
 	Arg  []string
 }
 
-type session interface {
+type Session interface {
 	Run(name string, arg ...string) error
 	Output(name string, arg ...string) ([]byte, error)
 	CombinedOutput(name string, arg ...string) ([]byte, error)
@@ -30,11 +30,11 @@ type session interface {
 	WriteString(name string, data string, mode ...string) error
 }
 
-type Session struct {
-	session
+type session struct {
+	Session
 }
 
-func NewSession(opt ...options.Option) (*Session, error) {
+func NewSession(opt ...options.Option) (Session, error) {
 	o := options.Default()
 	var err error
 	for _, option := range opt {
@@ -43,7 +43,7 @@ func NewSession(opt ...options.Option) (*Session, error) {
 			return nil, err
 		}
 	}
-	var s session
+	var s Session
 	if o.Local {
 		s = &LocalSession{writer: o.Writer}
 	} else {
@@ -58,8 +58,8 @@ func NewSession(opt ...options.Option) (*Session, error) {
 	if o.Single {
 		s = &SingleSession{
 			lock:    &sync.Mutex{},
-			session: s,
+			Session: s,
 		}
 	}
-	return &Session{s}, nil
+	return &session{s}, nil
 }

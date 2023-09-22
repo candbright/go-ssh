@@ -12,12 +12,13 @@ import (
 )
 
 type RemoteSession struct {
-	client   *ssh.Client
-	writer   io.Writer
-	ip       string
-	port     uint16
-	user     string
-	password string
+	client     *ssh.Client
+	writer     io.Writer
+	ip         string
+	port       uint16
+	user       string
+	password   string
+	sshKeyPath string
 }
 
 func (s *RemoteSession) Reconnect() error {
@@ -43,8 +44,7 @@ func (s *RemoteSession) Connect() error {
 	if s.password != "" {
 		auth = []ssh.AuthMethod{ssh.Password(s.password)}
 	} else {
-		sshKeyPath := "/root/.ssh/id_rsa"
-		keyAuth, err := publicKeyAuth(sshKeyPath)
+		keyAuth, err := publicKeyAuth(s.sshKeyPath)
 		if err != nil {
 			return err
 		}

@@ -48,11 +48,12 @@ func NewSession(opt ...options.Option) (Session, error) {
 		s = &LocalSession{writer: o.Writer}
 	} else {
 		s = &RemoteSession{
-			writer:   o.Writer,
-			ip:       o.Ip,
-			port:     o.Port,
-			user:     o.User,
-			password: o.Password,
+			writer:     o.Writer,
+			ip:         o.Ip,
+			port:       o.Port,
+			user:       o.User,
+			password:   o.Password,
+			sshKeyPath: o.SshKeyPath,
 		}
 	}
 	if o.Single {

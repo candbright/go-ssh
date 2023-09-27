@@ -113,7 +113,10 @@ func (s *LocalSession) RemoveAll(path string) error {
 }
 
 func (s *LocalSession) Create(name string) error {
-	_, err := os.Create(name)
+	file, err := os.Create(name)
+	defer func() {
+		_ = file.Close()
+	}()
 	return err
 }
 
@@ -126,6 +129,9 @@ func (s *LocalSession) WriteString(name string, data string, mode ...string) err
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = fileHandler.Close()
+	}()
 	_, err = fileHandler.WriteString(data)
 	if err != nil {
 		return err

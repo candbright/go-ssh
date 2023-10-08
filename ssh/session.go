@@ -30,10 +30,6 @@ type Session interface {
 	WriteString(name string, data string, mode ...string) error
 }
 
-type session struct {
-	Session
-}
-
 func NewSession(opt ...options.Option) (Session, error) {
 	o := options.Default()
 	var err error
@@ -62,5 +58,5 @@ func NewSession(opt ...options.Option) (Session, error) {
 			Session: s,
 		}
 	}
-	return &session{s}, nil
+	return s, nil
 }

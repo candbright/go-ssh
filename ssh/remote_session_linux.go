@@ -4,86 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/text/encoding/simplifiedchinese"
-	"io"
 	"os"
 	"strings"
-	"time"
 )
-
-type RemoteSession struct {
-	client     *ssh.Client
-	writer     io.Writer
-	ip         string
-	port       uint16
-	user       string
-	password   string
-	sshKeyPath string
-}
-
-func (s *RemoteSession) Reconnect() error {
-	if s.client != nil {
-		err := s.client.Close()
-		if err != nil {
-			return err
-		}
-		s.client = nil
-	}
-	err := s.Connect()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *RemoteSession) Connect() error {
-	if s.client != nil {
-		return nil
-	}
-	var auth []ssh.AuthMethod
-	if s.password != "" {
-		auth = []ssh.AuthMethod{ssh.Password(s.password)}
-	} else {
-		keyAuth, err := publicKeyAuth(s.sshKeyPath)
-		if err != nil {
-			return err
-		}
-		auth = []ssh.AuthMethod{keyAuth}
-	}
-	sshCfg := &ssh.ClientConfig{
-		Timeout:         time.Second * 10,
-		User:            s.user,
-		Auth:            auth,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	addr := fmt.Sprintf("%s:%d", s.ip, s.port)
-	sess, err := ssh.Dial("tcp", addr, sshCfg)
-	if err != nil {
-		return err
-	}
-	s.client = sess
-	return nil
-}
-
-func publicKeyAuth(kPath string) (ssh.AuthMethod, error) {
-	key, err := os.ReadFile(kPath)
-	if err != nil {
-		return nil, err
-	}
-	singer, err := ssh.ParsePrivateKey(key)
-	if err != nil {
-		return nil, err
-	}
-	return ssh.PublicKeys(singer), nil
-}
-
-func (s *RemoteSession) Close() error {
-	if s.client != nil {
-		return s.client.Close()
-	}
-	return nil
-}
 
 func (s *RemoteSession) Run(name string, arg ...string) error {
 	_, err := s.Output(name, arg...)
@@ -91,10 +14,6 @@ func (s *RemoteSession) Run(name string, arg ...string) error {
 }
 
 func (s *RemoteSession) Output(name string, arg ...string) ([]byte, error) {
-	err := s.Connect()
-	if err != nil {
-		return nil, err
-	}
 	sess, err := s.client.NewSession()
 	if err != nil {
 		return nil, err
@@ -103,21 +22,16 @@ func (s *RemoteSession) Output(name string, arg ...string) ([]byte, error) {
 	var errBuffer bytes.Buffer
 	sess.Stderr = &errBuffer
 	output, err := sess.Output(Command(name, arg...))
-	errStr, _ := simplifiedchinese.GBK.NewDecoder().String(errBuffer.String())
 	if err != nil {
-		Fail(s.writer, name, arg, errStr, err)
+		s.fail(name, arg, errBuffer.String(), err)
 		return nil, err
 	} else {
-		Success(s.writer, name, arg, string(output))
+		s.success(name, arg, string(output))
 		return output, nil
 	}
 }
 
 func (s *RemoteSession) CombinedOutput(name string, arg ...string) ([]byte, error) {
-	err := s.Connect()
-	if err != nil {
-		return nil, err
-	}
 	sess, err := s.client.NewSession()
 	if err != nil {
 		return nil, err
@@ -125,10 +39,10 @@ func (s *RemoteSession) CombinedOutput(name string, arg ...string) ([]byte, erro
 	defer sess.Close()
 	output, err := sess.CombinedOutput(Command(name, arg...))
 	if err != nil {
-		Fail(s.writer, name, arg, string(output), err)
+		s.fail(name, arg, string(output), err)
 		return nil, err
 	} else {
-		Success(s.writer, name, arg, string(output))
+		s.success(name, arg, string(output))
 		return output, nil
 	}
 }
@@ -144,7 +58,7 @@ func (s *RemoteSession) OutputGrep(cmdList []Cmd) ([]byte, error) {
 			cmdStrList[i] += " " + arg
 		}
 	}
-	name := "bash"
+	name := "/bin/bash"
 	arg := []string{"-c", strings.Join(cmdStrList, " | ")}
 	output, err := s.Output(name, arg...)
 	if err != nil {

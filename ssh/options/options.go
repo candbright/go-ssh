@@ -23,6 +23,7 @@ func Default() Options {
 		Single:     true,
 		Ip:         LocalIp,
 		Port:       22,
+		User:       "root",
 		SshKeyPath: "/root/.ssh/id_rsa",
 	}
 }

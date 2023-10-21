@@ -4,15 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"golang.org/x/text/encoding/simplifiedchinese"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
-
-type LocalSession struct {
-	writer io.Writer
-}
 
 func (s *LocalSession) Run(name string, arg ...string) error {
 	_, err := s.Output(name, arg...)
@@ -30,10 +25,10 @@ func (s *LocalSession) Output(name string, arg ...string) ([]byte, error) {
 	output, err := c.Output()
 	errStr, _ := simplifiedchinese.GBK.NewDecoder().String(errBuffer.String())
 	if err != nil {
-		Fail(s.writer, name, arg, errStr, err)
+		s.fail(name, arg, errStr, err)
 		return nil, err
 	} else {
-		Success(s.writer, name, arg, string(output))
+		s.success(name, arg, string(output))
 		return output, nil
 	}
 }
@@ -45,10 +40,10 @@ func (s *LocalSession) CombinedOutput(name string, arg ...string) ([]byte, error
 	copy(args[2:], arg)
 	output, err := exec.Command("cmd", args...).CombinedOutput()
 	if err != nil {
-		Fail(s.writer, name, arg, string(output), err)
+		s.fail(name, arg, string(output), err)
 		return nil, err
 	} else {
-		Success(s.writer, name, arg, string(output))
+		s.success(name, arg, string(output))
 		return output, nil
 	}
 }
@@ -72,10 +67,10 @@ func (s *LocalSession) OutputGrep(cmdList []Cmd) ([]byte, error) {
 	output, err := c.Output()
 	errStr, _ := simplifiedchinese.GBK.NewDecoder().String(errBuffer.String())
 	if err != nil {
-		Fail(s.writer, name, arg, errStr, err)
+		s.fail(name, arg, errStr, err)
 		return nil, err
 	} else {
-		Success(s.writer, name, arg, string(output))
+		s.success(name, arg, string(output))
 		return output, nil
 	}
 }

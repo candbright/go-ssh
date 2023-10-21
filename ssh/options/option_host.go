@@ -47,6 +47,7 @@ func LocalHost() Option {
 		Local: true,
 		Ip:    LocalIp,
 		Port:  22,
+		User:  "root",
 	}
 }
 
@@ -60,6 +61,9 @@ func RemoteHostPWD(ip string, port uint16, user string, password string) Option 
 	}
 	if port == 0 {
 		port = 22
+	}
+	if user == "" {
+		user = "root"
 	}
 	for _, localIp := range localIps {
 		if ip == localIp {

@@ -2,8 +2,8 @@ package ssh
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"strings"
 )
@@ -16,7 +16,7 @@ func (s *RemoteSession) Run(name string, arg ...string) error {
 func (s *RemoteSession) Output(name string, arg ...string) ([]byte, error) {
 	sess, err := s.client.NewSession()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer sess.Close()
 	var errBuffer bytes.Buffer
@@ -24,7 +24,7 @@ func (s *RemoteSession) Output(name string, arg ...string) ([]byte, error) {
 	output, err := sess.Output(Command(name, arg...))
 	if err != nil {
 		s.fail(name, arg, errBuffer.String(), err)
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else {
 		s.success(name, arg, string(output))
 		return output, nil
@@ -34,13 +34,13 @@ func (s *RemoteSession) Output(name string, arg ...string) ([]byte, error) {
 func (s *RemoteSession) CombinedOutput(name string, arg ...string) ([]byte, error) {
 	sess, err := s.client.NewSession()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer sess.Close()
 	output, err := sess.CombinedOutput(Command(name, arg...))
 	if err != nil {
 		s.fail(name, arg, string(output), err)
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else {
 		s.success(name, arg, string(output))
 		return output, nil

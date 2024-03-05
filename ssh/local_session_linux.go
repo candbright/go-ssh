@@ -2,9 +2,10 @@ package ssh
 
 import (
 	"bytes"
-	"errors"
+	"github.com/pkg/errors"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 )
 
@@ -20,7 +21,7 @@ func (s *LocalSession) Output(name string, arg ...string) ([]byte, error) {
 	output, err := c.Output()
 	if err != nil {
 		s.fail(name, arg, errBuffer.String(), err)
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else {
 		s.success(name, arg, string(output))
 		return output, nil
@@ -31,7 +32,7 @@ func (s *LocalSession) CombinedOutput(name string, arg ...string) ([]byte, error
 	output, err := exec.Command(name, arg...).CombinedOutput()
 	if err != nil {
 		s.fail(name, arg, string(output), err)
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else {
 		s.success(name, arg, string(output))
 		return output, nil
@@ -57,7 +58,7 @@ func (s *LocalSession) OutputGrep(cmdList []Cmd) ([]byte, error) {
 	output, err := c.Output()
 	if err != nil {
 		s.fail(name, arg, errBuffer.String(), err)
-		return nil, err
+		return nil, errors.WithStack(err)
 	} else {
 		s.success(name, arg, string(output))
 		return output, nil
@@ -69,31 +70,35 @@ func (s *LocalSession) Exists(path string) (bool, error) {
 }
 
 func (s *LocalSession) ReadFile(fileName string) ([]byte, error) {
-	return os.ReadFile(fileName)
+	file, err := os.ReadFile(fileName)
+	return file, errors.WithStack(err)
 }
 
 func (s *LocalSession) ReadDir(dir string) ([]FileInfo, error) {
 	dirs, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	files := make([]FileInfo, len(dirs))
 	for i, fileInfo := range dirs {
-		files[i] = FileInfo{Name: fileInfo.Name(), Path: fileInfo.Name()}
+		files[i] = FileInfo{Name: fileInfo.Name(), Path: path.Join(dir, fileInfo.Name())}
 	}
 	return files, nil
 }
 
 func (s *LocalSession) MakeDirAll(path string, perm os.FileMode) error {
-	return os.MkdirAll(path, perm)
+	err := os.MkdirAll(path, perm)
+	return errors.WithStack(err)
 }
 
 func (s *LocalSession) Remove(name string) error {
-	return os.Remove(name)
+	err := os.Remove(name)
+	return errors.WithStack(err)
 }
 
 func (s *LocalSession) RemoveAll(path string) error {
-	return os.RemoveAll(path)
+	err := os.RemoveAll(path)
+	return errors.WithStack(err)
 }
 
 func (s *LocalSession) Create(name string) error {
@@ -101,7 +106,7 @@ func (s *LocalSession) Create(name string) error {
 	defer func() {
 		_ = file.Close()
 	}()
-	return err
+	return errors.WithStack(err)
 }
 
 func (s *LocalSession) WriteString(name string, data string, mode ...string) error {
@@ -111,14 +116,14 @@ func (s *LocalSession) WriteString(name string, data string, mode ...string) err
 	}
 	fileHandler, err := os.OpenFile(name, flag, os.ModePerm)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	defer func() {
 		_ = fileHandler.Close()
 	}()
 	_, err = fileHandler.WriteString(data)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
 	return nil
 }
